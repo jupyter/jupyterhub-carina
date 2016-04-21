@@ -7,27 +7,7 @@ from tornado import gen
 from traitlets import Unicode, Integer
 from .CarinaOAuthClient import CarinaOAuthClient
 
-
 class CarinaSpawner(DockerSpawner):
-
-    # Expose configuration
-    oauth_callback_url = Unicode(
-        os.getenv('OAUTH_CALLBACK_URL', ''),
-        config=True,
-        help="""Callback URL to use.
-        Typically `https://{host}/hub/oauth_callback`"""
-    )
-
-    client_id_env = 'OAUTH_CLIENT_ID'
-    client_id = Unicode(config=True)
-    def _client_id_default(self):
-        return os.getenv(self.client_id_env, '')
-
-    client_secret_env = 'OAUTH_CLIENT_SECRET'
-    client_secret = Unicode(config=True)
-    def _client_secret_default(self):
-        return os.getenv(self.client_secret_env, '')
-
     cluster_name = Unicode(config=True, default_value='jupyterhub')
 
     cluster_polling_interval = Integer(config=True, default_value=30)
@@ -79,15 +59,11 @@ class CarinaSpawner(DockerSpawner):
     @property
     def carina_client(self):
         if self._carina_client is None:
-            # If we just authenticated, use the existing client which has the credentials loaded
-            # Otherwise, make a new client and assume that load_state is about to be called next with the credentials
-            if self.authenticator and self.authenticator.carina_client.credentials:
-                self.log.debug("Using the Carina client for %s from the CarinaAuthenticator", self.user.name)
-                self._carina_client = self.authenticator.carina_client
-                self._carina_client.user = self.user.name
-            else:
-                self.log.debug("Initializing a carina client for %s", self.user.name)
-                self._carina_client = CarinaOAuthClient(self.client_id, self.client_secret, self.oauth_callback_url, user=self.user.name)
+            self.log.debug("Initializing a carina client for %s", self.user.name)
+            # Load OAuth configuration from the authenticator
+            cfg = self.authenticator
+            self._carina_client = CarinaOAuthClient(cfg.client_id, cfg.client_secret, cfg.oauth_callback_url,
+                                                    user=self.user.name)
 
         return self._carina_client
 
@@ -184,6 +160,9 @@ class CarinaSpawner(DockerSpawner):
 
     @gen.coroutine
     def cluster_exists(self):
+        """
+        Safely check if the user's cluster exists
+        """
         try:
             yield self.docker('info')
             return True

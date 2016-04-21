@@ -34,7 +34,6 @@ c.CarinaAuthenticator.oauth_callback_url = "https://<jupyterhub_domain>/jupyter/
 c.JupyterHub.hub_ip = "0.0.0.0"
 c.JupyterHub.spawner_class = "jupyterhub_carina.CarinaSpawner"
 c.CarinaSpawner.hub_ip_connect = "<jupyterhub_domain>"
-c.CarinaSpawner.oauth_callback_url = "https://<jupyterhub_domain>/jupyter/hub/oauth_callback"
 ```
 
 ## Optional Variables
@@ -69,7 +68,6 @@ c.CarinaAuthenticator.oauth_callback_url = "https://<jupyterhub_domain>/jupyter/
 c.JupyterHub.hub_ip = "0.0.0.0"
 c.JupyterHub.spawner_class = "jupyterhub_carina.CarinaSpawner"
 c.CarinaSpawner.hub_ip_connect = "<jupyterhub_domain>"
-c.CarinaSpawner.oauth_callback_url = "https://<jupyterhub_domain>/jupyter/hub/oauth_callback"
 
 # Optional: Tweak how the CarinaSpawner creates the user's Carina cluster and container
 c.CarinaSpawner.cluster_name = "<cluster_name>"
@@ -79,15 +77,11 @@ c.CarinaSpawner.cluster_polling_interval = "<cluster_polling_interval>"
 
 # Optional: Tweak where your Carina OAuth application's credentials are located
 c.CarinaAuthenticator.client_id_env = "<client_id_env>"
-c.CarinaSpawner.client_id_env = "<client_id_env>"
 c.CarinaAuthenticator.client_secret_env = "<client_secret_env>"
-c.CarinaSpawner.client_secret_env = "<client_secret_env>"
 
 # Optional: Directly specify your Carina OAuth application's credentials
 c.CarinaAuthenticator.client_id = "<client_id>"
-c.CarinaSpawner.client_id = "<client_id>"
 c.CarinaAuthenticator.client_secret = "<client_secret>"
-c.CarinaSpawner.client_secret = "<client_secret>"
 ```
 
 [carina]: http://getcarina.com
