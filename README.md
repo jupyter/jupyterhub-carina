@@ -43,6 +43,9 @@ You can customize how the user's Jupyter server is created or how your OAuth cre
 * `<container_prefix>`: The prefix for the container running the user's server. Defaults to `jupyter`, resulting in a
     container named `jupyter-<username>`.
 * `<container_image>`: The name of the image to use for the user's server. Defaults to `jupyter/singleuser`.
+*  `<start_timeout>`: The timeout when starting a user's server, this value must account for cluster creation and
+    pulling the `container_image`. Defaults to `300` (5 minutes), but may need to be increased depending on the
+    size of `container_image`.
 * `<cluster_polling_interval>`: The number of seconds between polling for a user's Carina cluster to become active.
     Defaults to `30` seconds.
 * `<client_id_env>`: The environment variable containing your Carina OAuth Application Id.

@@ -7,10 +7,14 @@ from tornado import gen
 from traitlets import Unicode, Integer
 from .CarinaOAuthClient import CarinaOAuthClient
 
+
 class CarinaSpawner(DockerSpawner):
     cluster_name = Unicode(config=True, default_value='jupyterhub')
 
     cluster_polling_interval = Integer(config=True, default_value=30)
+
+    # Override the default timeout to allow extra time for creating the cluster and pulling the server image
+    start_timeout = Integer(config=True, default_value=300, help=DockerSpawner.start_timeout.help)
 
     extra_host_config = {
         'volumes_from': ['swarm-data'],
