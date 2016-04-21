@@ -134,30 +134,29 @@ class CarinaSpawner(DockerSpawner):
         container = yield super().get_container()
         return container
 
+    def get_env(self):
+        env = super().get_env()
+
+        self.log.debug("Adding Docker environment variables to the Jupyter server")
+        env['DOCKER_HOST'] = self.client.base_url.replace("https://", "tcp://")
+        env['DOCKER_TLS_VERIFY'] = 1
+        env['DOCKER_CERT_PATH'] = '/var/run/docker/'
+
+        return env
+
     @gen.coroutine
     def start(self):
         try:
-            self.log.info("Creating notebook infrastructure for {}...".format(self.user.name))
-
+            self.log.info("Creating infrastructure for {}...".format(self.user.name))
             yield self.create_cluster()
             yield self.download_cluster_credentials()
             yield self.pull_user_image()
 
-            self.log.info("Starting notebook container for {}...".format(self.user.name))
-            extra_env = {
-                'DOCKER_HOST': self.client.base_url.replace("https://", "tcp://"),
-                'DOCKER_TLS_VERIFY': 1,
-                'DOCKER_CERT_PATH': '/var/run/docker/'
-            }
-            extra_env.update(self.get_env())
-            extra_create_kwargs = {
-                'environment': extra_env
-            }
-
-            yield super().start(extra_create_kwargs=extra_create_kwargs)
+            self.log.info("Starting container for {}...".format(self.user.name))
+            yield super().start()
 
             self.log.debug('Startup for {} is complete!'.format(self.user.name))
-        except Exception as e:
+        except Exception:
             self.log.exception('Startup for {} failed!'.format(self.user.name))
             raise
 
