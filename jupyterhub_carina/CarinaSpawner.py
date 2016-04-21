@@ -199,6 +199,7 @@ class CarinaSpawner(DockerSpawner):
         except requests.exceptions.RequestException:
             # Remove old credentials now that they no longer work
             shutil.rmtree(credentials_dir, ignore_errors=True)
+            self._client = None
             return False
 
     @gen.coroutine
