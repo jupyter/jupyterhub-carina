@@ -3,6 +3,7 @@ from dockerspawner import DockerSpawner
 import os.path
 import re
 import requests
+import shutil
 from tornado import gen
 from traitlets import Dict, Integer, Unicode
 from .CarinaOAuthClient import CarinaOAuthClient
@@ -125,10 +126,7 @@ class CarinaSpawner(DockerSpawner):
 
     @gen.coroutine
     def get_container(self):
-        if not os.path.exists(self.get_user_credentials_dir()):
-            return None
-
-        if not self.cluster_exists():
+        if not (yield self.cluster_exists()):
             return None
 
         container = yield super().get_container()
@@ -190,10 +188,17 @@ class CarinaSpawner(DockerSpawner):
         """
         Safely check if the user's cluster exists
         """
+
+        credentials_dir = self.get_user_credentials_dir()
+        if not os.path.exists(credentials_dir):
+            return False
+
         try:
             yield self.docker('info')
             return True
         except requests.exceptions.RequestException:
+            # Remove old credentials now that they no longer work
+            shutil.rmtree(credentials_dir, ignore_errors=True)
             return False
 
     @gen.coroutine
