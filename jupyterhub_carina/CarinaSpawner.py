@@ -4,26 +4,50 @@ import os.path
 import re
 import requests
 from tornado import gen
-from traitlets import Unicode, Integer
+from traitlets import Dict, Integer, Unicode
 from .CarinaOAuthClient import CarinaOAuthClient
 
 
 class CarinaSpawner(DockerSpawner):
-    cluster_name = Unicode(config=True, default_value='jupyterhub')
-    container_name = Unicode(config=True, default_value='jupyter')
-    cluster_polling_interval = Integer(config=True, default_value=30)
+    """
+    Spawn the user's Jupyter server on their Carina cluster.
+    """
+
+    cluster_name = Unicode(
+        'jupyterhub',
+        help="The name of the user's Carina cluster.",
+        config=True)
+
+    # Override the default container name. Since we are running on the user's cluster, we don't need the username suffix
+    container_name = Unicode(
+        'jupyter',
+        help="The name of the Jupyter server container running on the user's cluster.",
+        config=True)
+
+    cluster_polling_interval = Integer(
+        30,
+        help="The number of seconds between polling for a user's cluster to become active.",
+        config=True
+    )
 
     # Override the default timeout to allow extra time for creating the cluster and pulling the server image
-    start_timeout = Integer(config=True, default_value=300, help=DockerSpawner.start_timeout.help)
+    start_timeout = Integer(
+        300,
+        help=DockerSpawner.start_timeout.help,
+        config=True)
 
-    extra_host_config = {
-        'volumes_from': ['swarm-data'],
-        'port_bindings': {8888: None},
-        'restart_policy': {
-            'MaximumRetryCount': 0,
-            'Name': 'always'
-        }
-    }
+    # Override the docker run parameters
+    extra_host_config = Dict(
+        {
+            'volumes_from': ['swarm-data'],  # --volumes-from swarm-data
+            'port_bindings': {8888: None},   # -p 8888:8888
+            'restart_policy': {              # --restart always
+                'MaximumRetryCount': 0,
+                'Name': 'always'
+            },
+        },
+        help=DockerSpawner.extra_host_config.help,
+        config=True)
 
     def __init__(self, **kwargs):
         # Use a different docker client for each server
