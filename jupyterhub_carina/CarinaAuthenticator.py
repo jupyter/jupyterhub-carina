@@ -28,7 +28,6 @@ class CarinaAuthenticator(OAuthenticator, LoggingConfigurable):
         cf https://github.com/jupyter/oauthenticator/issues/28
         """)
 
-
     _carina_client = None
     @property
     def carina_client(self):
@@ -47,6 +46,7 @@ class CarinaAuthenticator(OAuthenticator, LoggingConfigurable):
         profile = yield self.carina_client.get_user_profile()
 
         carina_username = profile['username']
+        self.carina_client.user = carina_username
 
         # map username to system username
         system_username = self.username_map.get(carina_username, carina_username)
@@ -56,3 +56,14 @@ class CarinaAuthenticator(OAuthenticator, LoggingConfigurable):
             system_username = None
 
         return system_username
+
+    def pre_spawn_start(self, user, spawner):
+        """
+        Update the spawner with the OAuth credentials from the last time the user signed in
+        """
+        creds = self.carina_client.credentials
+        if creds is None:
+            return
+
+        self.log.debug("Updating the spawner with the most recent credentials")
+        spawner.carina_client.load_credentials(creds.access_token, creds.refresh_token, creds.expires_at)
