@@ -10,7 +10,7 @@ from .CarinaOAuthClient import CarinaOAuthClient
 
 class CarinaSpawner(DockerSpawner):
     cluster_name = Unicode(config=True, default_value='jupyterhub')
-
+    container_name = Unicode(config=True, default_value='jupyter')
     cluster_polling_interval = Integer(config=True, default_value=30)
 
     # Override the default timeout to allow extra time for creating the cluster and pulling the server image

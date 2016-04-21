@@ -40,8 +40,7 @@ c.CarinaSpawner.hub_ip_connect = "<jupyterhub_domain>"
 You can customize how the user's Jupyter server is created or how your OAuth credentials are specified.
 
 * `<cluster_name>`: The name of the Carina cluster to create for users. Defaults to `jupyterhub`.
-* `<container_prefix>`: The prefix for the container running the user's server. Defaults to `jupyter`, resulting in a
-    container named `jupyter-<username>`.
+* `<container_name>`: The name of the Jupyter server container running on the user's cluster. Defaults to `jupyter`.
 * `<container_image>`: The name of the image to use for the user's server. Defaults to `jupyter/singleuser`.
 *  `<start_timeout>`: The timeout when starting a user's server, this value must account for cluster creation and
     pulling the `container_image`. Defaults to `300` (5 minutes), but may need to be increased depending on the
