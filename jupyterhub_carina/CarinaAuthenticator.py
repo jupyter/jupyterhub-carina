@@ -48,14 +48,11 @@ class CarinaAuthenticator(OAuthenticator, LoggingConfigurable):
         carina_username = profile['username']
         self.carina_client.user = carina_username
 
-        # map username to system username
-        system_username = self.username_map.get(carina_username, carina_username)
+        # verify that the user is authorized on this system
+        if self.whitelist and carina_username not in self.whitelist:
+            carina_username = None
 
-        # check system username against whitelist
-        if self.whitelist and system_username not in self.whitelist:
-            system_username = None
-
-        return system_username
+        return carina_username
 
     def pre_spawn_start(self, user, spawner):
         """
