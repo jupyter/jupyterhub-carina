@@ -9,16 +9,27 @@ from zipfile import ZipFile
 
 
 class CarinaOAuthCredentials:
+    """
+    A set of Carina OAuth credentials
+    """
+
     def __init__(self, access_token, refresh_token, expires_at):
         self.access_token = access_token
         self.refresh_token = refresh_token
         self.expires_at = expires_at
 
     def is_expired(self):
+        """
+        Check if the access_token is, or is about to be, expired
+        """
         return time() >= (self.expires_at + 60)
 
 
 class CarinaOAuthClient(LoggingConfigurable):
+    """
+    Communicates with Carina via the OAuth2 protocol
+    """
+
     CARINA_OAUTH_HOST = os.environ.get('CARINA_OAUTH_HOST') or 'oauth.getcarina.com'
     CARINA_AUTHORIZE_URL = "https://%s/oauth/authorize" % CARINA_OAUTH_HOST
     CARINA_TOKEN_URL = "https://%s/oauth/token" % CARINA_OAUTH_HOST
@@ -43,7 +54,6 @@ class CarinaOAuthClient(LoggingConfigurable):
 
         See: https://github.com/doorkeeper-gem/doorkeeper/wiki/API-endpoint-descriptions-and-examples#post---oauthtoken
         """
-
         self.log.debug("Requesting oauth tokens")
         body = {
             'code': authorization_code,
@@ -59,7 +69,6 @@ class CarinaOAuthClient(LoggingConfigurable):
 
         See: https://github.com/doorkeeper-gem/doorkeeper/wiki/API-endpoint-descriptions-and-examples#curl-command-refresh-token-grant
         """
-
         self.log.info("Refreshing oauth tokens for %s", self.user)
         body = {
             'refresh_token': self.credentials.refresh_token,
@@ -71,9 +80,8 @@ class CarinaOAuthClient(LoggingConfigurable):
     @gen.coroutine
     def get_user_profile(self):
         """
-        Determine who the logged in user is
+        Determine the identity of the current user
         """
-
         self.log.debug("Retrieving the user profile")
         request = HTTPRequest(
             url=self.CARINA_PROFILE_URL,
@@ -90,7 +98,6 @@ class CarinaOAuthClient(LoggingConfigurable):
         """
         Create a Carina cluster
         """
-
         self.log.info("Creating cluster %s/%s", self.user, cluster_name)
         request = HTTPRequest(
             url=os.path.join(self.CARINA_CLUSTERS_URL, cluster_name),
@@ -107,9 +114,8 @@ class CarinaOAuthClient(LoggingConfigurable):
     @gen.coroutine
     def download_cluster_credentials(self, cluster_name, destination, polling_interval=30):
         """
-        Download a cluster's credentials to the specified location.
+        Download a cluster's credentials to the specified location
         """
-
         self.log.info("Downloading cluster credentials for %s/%s", self.user, cluster_name)
         request = HTTPRequest(
             url=os.path.join(self.CARINA_CLUSTERS_URL, cluster_name),
@@ -146,7 +152,6 @@ class CarinaOAuthClient(LoggingConfigurable):
         """
         Requests a new set of OAuth tokens
         """
-
         body.update({
             'client_id': self.client_id,
             'client_secret': self.client_secret,
@@ -175,9 +180,10 @@ class CarinaOAuthClient(LoggingConfigurable):
     @gen.coroutine
     def execute_oauth_request(self, request, raise_error=True):
         """
-        Execute an OAuth request, retrying with a new set of tokens if the OAuth access token is expired or rejected
-        """
+        Execute an OAuth request
 
+        Retry with a new set of tokens when the OAuth access token is expired or rejected
+        """
         if self.credentials.is_expired():
             self.log.info("The OAuth token for %s expired at %s", self.user, ctime(self.credentials.expires_at))
             yield self.refresh_tokens()
@@ -191,7 +197,7 @@ class CarinaOAuthClient(LoggingConfigurable):
                 raise
 
             # Try once more with a new set of tokens
-            self.log.info("The OAuth token for %s were rejected", self.user)
+            self.log.info("The OAuth token for %s was rejected", self.user)
             yield self.refresh_tokens()
             self.authorize_request(request)
             return (yield self.execute_request(request, raise_error))
@@ -200,7 +206,6 @@ class CarinaOAuthClient(LoggingConfigurable):
         """
         Add the Authorization header with the user's OAuth access token to a request
         """
-
         request.headers.update({
                 'Authorization': 'bearer {}'.format(self.credentials.access_token)
             })
@@ -208,7 +213,7 @@ class CarinaOAuthClient(LoggingConfigurable):
     @gen.coroutine
     def execute_request(self, request, raise_error=True):
         """
-        Execute a HTTP request and log the error, if any
+        Execute an HTTP request and log the error, if any
         """
 
         self.log.debug("%s %s", request.method, request.url)

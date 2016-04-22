@@ -11,7 +11,7 @@ from .CarinaOAuthClient import CarinaOAuthClient
 
 class CarinaSpawner(DockerSpawner):
     """
-    Spawn the user's Jupyter server on their Carina cluster.
+    Spawn the user's Jupyter server on their Carina cluster
     """
 
     cluster_name = Unicode(
@@ -62,7 +62,6 @@ class CarinaSpawner(DockerSpawner):
         """
         The Docker client used to connect to the user's Carina cluster
         """
-
         # TODO: Figure out how to configure this without overriding, or tweak a bit and call super
         if self._client is None:
             carina_dir = self.get_user_credentials_dir()
@@ -161,9 +160,10 @@ class CarinaSpawner(DockerSpawner):
     @gen.coroutine
     def create_cluster(self):
         """
-        Create a Carina cluster.
+        Create a Carina cluster
+
         The API will return the cluster information if it already exists,
-        so it's safe to call without checking if it exists first.
+        so it's safe to call without first checking if the cluster exists.
         """
         self.log.info("Creating cluster named: {} for {}".format(self.cluster_name, self.user.name))
         yield self.carina_client.create_cluster(self.cluster_name)
@@ -172,8 +172,9 @@ class CarinaSpawner(DockerSpawner):
     def download_cluster_credentials(self):
         """
         Download the cluster credentials
+
         The API will return 404 if the cluster isn't available yet,
-        in which case the reqeust should be retried
+        in which case the request should be retried.
         """
         credentials_dir = self.get_user_credentials_dir()
         if os.path.exists(credentials_dir):
@@ -188,7 +189,6 @@ class CarinaSpawner(DockerSpawner):
         """
         Safely check if the user's cluster exists
         """
-
         credentials_dir = self.get_user_credentials_dir()
         if not os.path.exists(credentials_dir):
             return False
@@ -205,7 +205,7 @@ class CarinaSpawner(DockerSpawner):
     @gen.coroutine
     def pull_user_image(self):
         """
-        Pull the user image to the cluster, so that it is ready to start instantly
+        Pull the user image to the cluster
         """
         self.log.debug("Starting to pull {} to the {}/{} cluster..."
                        .format(self.container_image, self.user.name, self.cluster_name))

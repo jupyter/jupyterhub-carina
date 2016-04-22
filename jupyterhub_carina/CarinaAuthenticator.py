@@ -9,6 +9,7 @@ class CarinaLoginHandler(OAuthLoginHandler, OAuth2Mixin):
     """
     Carina OAuth dance magic
     """
+
     _OAUTH_AUTHORIZE_URL = CarinaOAuthClient.CARINA_AUTHORIZE_URL
     _OAUTH_ACCESS_TOKEN_URL = CarinaOAuthClient.CARINA_TOKEN_URL
 
@@ -17,7 +18,7 @@ class CarinaLoginHandler(OAuthLoginHandler, OAuth2Mixin):
 
 class CarinaAuthenticator(OAuthenticator, LoggingConfigurable):
     """
-    Authenticate users with their Carina account.
+    Authenticate users with their Carina account
     """
 
     # Configure the base OAuthenticator
@@ -37,7 +38,6 @@ class CarinaAuthenticator(OAuthenticator, LoggingConfigurable):
         """
         Complete the OAuth dance and identify the user
         """
-
         authorization_code = handler.get_argument("code", False)
         if not authorization_code:
             raise web.HTTPError(400, "OAuth callback made without a token")
@@ -56,9 +56,8 @@ class CarinaAuthenticator(OAuthenticator, LoggingConfigurable):
 
     def pre_spawn_start(self, user, spawner):
         """
-        Update the spawner with the OAuth credentials from the last time the user signed in
+        Update the spawner with the most recent OAuth credentials
         """
-
         creds = self.carina_client.credentials
         if creds is None:
             return
