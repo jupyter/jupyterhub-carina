@@ -34,7 +34,7 @@ class CarinaAuthenticator(OAuthenticator, LoggingConfigurable):
         return self._carina_client
 
     @gen.coroutine
-    def authenticate(self, handler):
+    def authenticate(self, handler, data=None):
         """
         Complete the OAuth dance and identify the user
         """
