@@ -8,7 +8,9 @@ For an example of what this looks like, head over to [howtowhale.com](https://ho
 
 # Prerequisites
 JupyterHub communicates with Carina using OAuth. Before your JupyterHub installation can integrate with Carina, you must
-first register the application. See the [Carina OAuth documentation][carina-oauth] for instructions on how to register. When asked for the **Redirect URI**, use the following format `https://<jupyterhub_domain>/jupyter/hub/oauth_callback`. The registered callback or redirect URL must match the value in your JupyterHub configuration file.
+first register the application. See the [Carina OAuth documentation][carina-oauth] for instructions on how to register. When asked for the **Redirect URI**, use the following format `https://<jupyterhub_domain>/hub/oauth_callback`. The registered callback or redirect URL must match the value in your JupyterHub configuration file.
+
+**Note**: If you have customized the JupyterHub `base_url`, then the Redirect URI must be updated to match.
 
 After you have registered, note the **Application Id**, **Secret** and **Callback URL** because they are required
 in order to configure your JupyterHub server to use Carina.
@@ -28,7 +30,7 @@ c = get_config()
 # Required: Configure JupyterHub to authenticate against Carina
 c.JupyterHub.authenticator_class = "jupyterhub_carina.CarinaAuthenticator"
 c.CarinaAuthenticator.admin_users = ["<carina_username>"]
-c.CarinaAuthenticator.oauth_callback_url = "https://<jupyterhub_domain>/jupyter/hub/oauth_callback"
+c.CarinaAuthenticator.oauth_callback_url = "https://<jupyterhub_domain>/hub/oauth_callback"
 
 # Required: Configure JupyterHub to spawn user servers on Carina
 c.JupyterHub.hub_ip = "0.0.0.0"
@@ -64,7 +66,7 @@ c = get_config()
 # Required: Configure JupyterHub to authenticate against Carina
 c.JupyterHub.authenticator_class = "jupyterhub_carina.CarinaAuthenticator"
 c.CarinaAuthenticator.admin_users = ["<carina_username>"]
-c.CarinaAuthenticator.oauth_callback_url = "https://<jupyterhub_domain>/jupyter/hub/oauth_callback"
+c.CarinaAuthenticator.oauth_callback_url = "https://<jupyterhub_domain>/hub/oauth_callback"
 
 # Required: Configure JupyterHub to spawn user servers on Carina
 c.JupyterHub.hub_ip = "0.0.0.0"
