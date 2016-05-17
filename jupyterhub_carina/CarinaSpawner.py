@@ -54,7 +54,7 @@ class CarinaSpawner(DockerSpawner):
         # Use a different docker client for each server
         self._client = None
         self._carina_client = None
-        
+
         super().__init__(**kwargs)
 
     @property
@@ -196,7 +196,7 @@ class CarinaSpawner(DockerSpawner):
         try:
             yield self.docker('info')
             return True
-        except requests.exceptions.RequestException:
+        except Exception:
             # Remove old credentials now that they no longer work
             shutil.rmtree(credentials_dir, ignore_errors=True)
             self._client = None
