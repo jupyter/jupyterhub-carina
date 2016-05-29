@@ -1,0 +1,74 @@
+version: '2'
+services:
+  data: # Holds our certificates and other data that needs to stay the same between rebuilds
+    build:
+      context: data
+      args:
+        - "constraint:node==*-n1"
+    container_name: jupyterhub-data
+    volumes:
+      - /etc/certs
+      - /etc/letsencrypt
+      - /etc/jupyterhub
+    environment:
+      - "constraint:node==*-n1"
+  letsencrypt: # Handles generating and reissuing Let's Encrypt certificates
+    build:
+      context: letsencrypt
+      args:
+        - "constraint:node==*-n1"
+        - DOCKER_VERSION
+    container_name: letsencrypt
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    volumes_from:
+      - data
+    environment:
+      - "constraint:node==*-n1"
+      - DOMAIN=$JUPYTERHUB_DOMAIN
+      - EMAIL=$LETSENCRYPT_EMAIL
+      - USE_PRODUCTION=$LETSENCRYPT_USE_PRODUCTION
+  jupyterhub:
+    build:
+      context: jupyterhub
+      args:
+        - "constraint:node==*-n1"
+    container_name: jupyterhub
+    ports:
+      # TODO: Route this through nginx
+      - '8081:8081'
+    #restart: always
+    volumes_from:
+      - data
+    environment:
+      - "constraint:node==*-n1"
+      - DOMAIN=$JUPYTERHUB_DOMAIN
+      - JUPYTERHUB_ADMINS
+      - JUPYTER_IMAGE
+      - OAUTH_CLIENT_ID=$CARINA_OAUTH_CLIENT_ID
+      - OAUTH_CLIENT_SECRET=$CARINA_OAUTH_CLIENT_SECRET
+  web: # The landing page for the website
+    build:
+      context: web
+      args:
+        - "constraint:node==*-n1"
+    container_name: website
+    environment:
+      - "constraint:node==*-n1"
+  proxy: # Directs traffic to the website, letsencrypt, jupyterhub and user servers
+    build:
+      context: proxy
+      args:
+        - "constraint:node==*-n1"
+        - DOMAIN=$JUPYTERHUB_DOMAIN
+    container_name: nginx
+    ports:
+      - '80:80'
+      - '443:443'
+    #restart: always
+    volumes_from:
+      - data
+      - web
+    environment:
+      - "constraint:node==*-n1"
+      - DOMAIN=$JUPYTERHUB_DOMAIN
