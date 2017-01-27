@@ -145,8 +145,8 @@ class CarinaSpawner(DockerSpawner):
     def start(self):
         try:
             self.log.info("Creating infrastructure for {}...".format(self.user.name))
-            yield self.create_cluster()
-            yield self.download_cluster_credentials()
+            cluster = yield self.create_cluster()
+            yield self.download_cluster_credentials(cluster['id'])
             yield self.pull_user_image()
 
             self.log.info("Starting container for {}...".format(self.user.name))
@@ -161,28 +161,25 @@ class CarinaSpawner(DockerSpawner):
     def create_cluster(self):
         """
         Create a Carina cluster
-
-        The API will return the cluster information if it already exists,
-        so it's safe to call without first checking if the cluster exists.
         """
         self.log.info("Creating cluster named: {} for {}".format(self.cluster_name, self.user.name))
         return (yield self.carina_client.create_cluster(self.cluster_name))
 
     @gen.coroutine
-    def download_cluster_credentials(self):
+    def download_cluster_credentials(self, cluster_id):
         """
         Download the cluster credentials
-
-        The API will return 404 if the cluster isn't available yet,
-        in which case the request should be retried.
         """
         credentials_dir = self.get_user_credentials_dir()
         if os.path.exists(credentials_dir):
             return
 
-        self.log.info("Downloading cluster credentials for {}/{}...".format(self.user.name, self.cluster_name))
+        self.log.info("Downloading cluster credentials for {}/{} ({})..."
+                      .format(self.user.name, self.cluster_name, cluster_id))
         user_dir = "/root/.carina/clusters/{}".format(self.user.name)
-        yield self.carina_client.download_cluster_credentials(self.cluster_name, user_dir, self.cluster_polling_interval)
+        yield self.carina_client.download_cluster_credentials(cluster_id, self.cluster_name,
+                                                              user_dir,
+                                                              self.cluster_polling_interval)
 
     @gen.coroutine
     def cluster_exists(self):
