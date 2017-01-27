@@ -166,7 +166,7 @@ class CarinaSpawner(DockerSpawner):
         so it's safe to call without first checking if the cluster exists.
         """
         self.log.info("Creating cluster named: {} for {}".format(self.cluster_name, self.user.name))
-        yield self.carina_client.create_cluster(self.cluster_name)
+        return (yield self.carina_client.create_cluster(self.cluster_name))
 
     @gen.coroutine
     def download_cluster_credentials(self):
