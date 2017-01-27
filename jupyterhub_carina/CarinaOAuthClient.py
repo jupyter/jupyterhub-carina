@@ -6,7 +6,7 @@ from tornado.httpclient import HTTPRequest, HTTPError, AsyncHTTPClient
 from traitlets.config import LoggingConfigurable
 import urllib
 from zipfile import ZipFile
-
+from ._version import __version__
 
 class CarinaOAuthCredentials:
     """
@@ -107,10 +107,10 @@ class CarinaOAuthClient(LoggingConfigurable):
             url=self.CARINA_CLUSTERS_URL,
             method='POST',
             body=json.dumps({
-              "cluster_type_id": template_id,
-              "node_count": 1,
-              "name": cluster_name
-            }),
+                      "cluster_type_id": template_id,
+                      "node_count": 1,
+                      "name": cluster_name
+                      }),
             headers={
                 'Content-Type': 'application/json',
                 'Accept': 'application/json'
@@ -257,8 +257,8 @@ class CarinaOAuthClient(LoggingConfigurable):
         Add the Authorization header with the user's OAuth access token to a request
         """
         request.headers.update({
-                'Authorization': 'bearer {}'.format(self.credentials.access_token)
-            })
+            'Authorization': 'bearer {}'.format(self.credentials.access_token)
+        })
 
     @gen.coroutine
     def execute_request(self, request, raise_error=True):
@@ -269,8 +269,8 @@ class CarinaOAuthClient(LoggingConfigurable):
         self.log.debug("%s %s", request.method, request.url)
         http_client = AsyncHTTPClient()
         request.headers.update({
-                'User-Agent': 'jupyterhub'
-            })
+            'User-Agent': 'jupyterhub-carina/' + __version__
+        })
         try:
             return (yield http_client.fetch(request, raise_error=raise_error))
         except HTTPError as e:
