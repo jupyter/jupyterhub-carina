@@ -151,13 +151,18 @@ class CarinaOAuthClient(LoggingConfigurable):
         return template_id
 
     @gen.coroutine
-    def download_cluster_credentials(self, cluster_name, destination, polling_interval=30):
+    def download_cluster_credentials(self, cluster_id, cluster_name, destination,
+                                     polling_interval=30):
         """
         Download a cluster's credentials to the specified location
+
+        The API will return 404 if the cluster isn't available yet,
+        in which case the request should be retried.
         """
-        self.log.info("Downloading cluster credentials for %s/%s", self.user, cluster_name)
+        self.log.info("Downloading cluster credentials for %s/%s (%s)",
+                      self.user, cluster_name, cluster_id)
         request = HTTPRequest(
-            url=os.path.join(self.CARINA_CLUSTERS_URL, cluster_name),
+            url=os.path.join(self.CARINA_CLUSTERS_URL, cluster_id, 'credentials/zip'),
             method='GET',
             headers={
                 'Accept': 'application/zip'
@@ -168,18 +173,23 @@ class CarinaOAuthClient(LoggingConfigurable):
             response = yield self.execute_oauth_request(request, raise_error=False)
 
             if response.error is None:
-                self.log.debug("Credentials for %s/%s received.", self.user, cluster_name)
+                self.log.debug("Credentials for %s/%s (%s) received.",
+                               self.user, cluster_name, cluster_id)
                 break
 
-            if response.code == 404 and "cluster is not yet active" in response.body.decode(encoding='UTF-8'):
-                self.log.debug("The %s/%s cluster is not yet active, retrying in %s seconds...",
-                               self.user, cluster_name, polling_interval)
+            if response.code == 404 and "cluster is not yet active" in response.body.decode(
+                    encoding='UTF-8'):
+                self.log.debug("The %s/%s (%s) cluster is not yet active, retrying in %s "
+                               "seconds...", self.user, cluster_name, cluster_id, polling_interval)
                 yield gen.sleep(polling_interval)
                 continue
 
             # abort, something bad happened!
-            self.log.error('An error occurred while downloading cluster credentials for %s/%s:\n(%s) %s\n%s',
-                           self.user, cluster_name, response.response.code, response.response.body, response.error)
+            self.log.error(
+                'An error occurred while downloading cluster credentials for %s/%s (%s):\n'
+                '(%s) %s\n%s',
+                self.user, cluster_name, cluster_id,
+                response.code, response.body, response.error)
             response.rethrow
 
         credentials_zip = ZipFile(response.buffer, "r")
