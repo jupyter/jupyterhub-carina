@@ -33,8 +33,9 @@ class CarinaOAuthClient(LoggingConfigurable):
     CARINA_OAUTH_HOST = os.environ.get('CARINA_OAUTH_HOST') or 'oauth.getcarina.com'
     CARINA_AUTHORIZE_URL = "https://%s/oauth/authorize" % CARINA_OAUTH_HOST
     CARINA_TOKEN_URL = "https://%s/oauth/token" % CARINA_OAUTH_HOST
-    CARINA_PROFILE_URL = "https://%s/me" % CARINA_OAUTH_HOST
-    CARINA_CLUSTERS_URL = "https://%s/clusters" % CARINA_OAUTH_HOST
+    CARINA_PROFILE_URL = "https://%s/users/current" % CARINA_OAUTH_HOST
+    CARINA_CLUSTERS_URL = "https://%s/proxy/clusters" % CARINA_OAUTH_HOST
+    CARINA_TEMPLATES_URL = "https://%s/proxy/cluster_types" % CARINA_OAUTH_HOST
 
     def __init__(self, client_id, client_secret, callback_url, user='UNKNOWN'):
         super().__init__()
@@ -98,18 +99,56 @@ class CarinaOAuthClient(LoggingConfigurable):
         """
         Create a Carina cluster
         """
-        self.log.info("Creating cluster %s/%s", self.user, cluster_name)
+        template_id = yield self.lookup_swarm_template()
+
+        self.log.info("Creating cluster %s/%s using template %d", self.user, cluster_name,
+                      template_id)
         request = HTTPRequest(
-            url=os.path.join(self.CARINA_CLUSTERS_URL, cluster_name),
-            method='PUT',
-            body='{}',
+            url=self.CARINA_CLUSTERS_URL,
+            method='POST',
+            body=json.dumps({
+              "cluster_type_id": template_id,
+              "node_count": 1,
+              "name": cluster_name
+            }),
+            headers={
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            })
+        self.log.info("Request: %s", request.body)
+
+        response = yield self.execute_oauth_request(request)
+        result = json.loads(response.body.decode('utf8', 'replace'))
+        self.log.info("Response: %s", response.body)
+
+        return result
+
+    @gen.coroutine
+    def lookup_swarm_template(self):
+        """
+        Lookup the latest template for Docker Swarm
+        """
+        self.log.info("Looking up latest Carina swarm template")
+        request = HTTPRequest(
+            url=self.CARINA_TEMPLATES_URL,
+            method='GET',
             headers={
                 'Accept': 'application/json'
             })
 
         response = yield self.execute_oauth_request(request)
-        result = json.loads(response.body.decode('utf8', 'replace'))
-        return result
+        results = json.loads(response.body.decode('utf8', 'replace'))
+
+        # Get the most recent template for Docker Swarm
+        template_id = 0
+        for result in results['cluster_types']:
+            if result['coe'] == 'swarm' and result['id'] > template_id:
+                template_id = result['id']
+
+        if template_id == 0:
+            raise Exception('Unable to find a Docker Swarm template')
+
+        return template_id
 
     @gen.coroutine
     def download_cluster_credentials(self, cluster_name, destination, polling_interval=30):
