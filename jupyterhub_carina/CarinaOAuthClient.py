@@ -234,7 +234,8 @@ class CarinaOAuthClient(LoggingConfigurable):
         Retry with a new set of tokens when the OAuth access token is expired or rejected
         """
         if self.credentials.is_expired():
-            self.log.info("The OAuth token for %s expired at %s", self.user, ctime(self.credentials.expires_at))
+            self.log.info("The OAuth token for %s expired at %s", self.user,
+                          ctime(self.credentials.expires_at))
             yield self.refresh_tokens()
 
         self.authorize_request(request)
