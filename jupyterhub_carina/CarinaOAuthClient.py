@@ -177,7 +177,7 @@ class CarinaOAuthClient(LoggingConfigurable):
                                self.user, cluster_name, cluster_id)
                 break
 
-            if response.code == 404 and "cluster is not yet active" in response.body.decode(
+            if response.code == 404 and "Cluster credentials do not exist" in response.body.decode(
                     encoding='UTF-8'):
                 self.log.debug("The %s/%s (%s) cluster is not yet active, retrying in %s "
                                "seconds...", self.user, cluster_name, cluster_id, polling_interval)
