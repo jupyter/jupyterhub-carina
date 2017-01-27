@@ -13,7 +13,7 @@ class CarinaLoginHandler(OAuthLoginHandler, OAuth2Mixin):
     _OAUTH_AUTHORIZE_URL = CarinaOAuthClient.CARINA_AUTHORIZE_URL
     _OAUTH_ACCESS_TOKEN_URL = CarinaOAuthClient.CARINA_TOKEN_URL
 
-    scope = ['identity', 'cluster_credentials', 'create_cluster']
+    scope = ['identity', 'read', 'write', 'execute']
 
 
 class CarinaAuthenticator(OAuthenticator, LoggingConfigurable):
