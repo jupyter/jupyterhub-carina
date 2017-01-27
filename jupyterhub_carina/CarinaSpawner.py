@@ -2,7 +2,6 @@ import docker
 from dockerspawner import DockerSpawner
 import os.path
 import re
-import requests
 import shutil
 from tornado import gen
 from traitlets import Dict, Integer, Unicode
@@ -19,7 +18,8 @@ class CarinaSpawner(DockerSpawner):
         help="The name of the user's Carina cluster.",
         config=True)
 
-    # Override the default container name. Since we are running on the user's cluster, we don't need the username suffix
+    # Override the default container name. Since we are running on the user's cluster, we don't
+    # need the username suffix
     container_name = Unicode(
         'jupyter',
         help="The name of the Jupyter server container running on the user's cluster.",
@@ -31,7 +31,8 @@ class CarinaSpawner(DockerSpawner):
         config=True
     )
 
-    # Override the default timeout to allow extra time for creating the cluster and pulling the server image
+    # Override the default timeout to allow extra time for creating the cluster and pulling the
+    # server image
     start_timeout = Integer(
         300,
         help=DockerSpawner.start_timeout.help,
@@ -41,8 +42,8 @@ class CarinaSpawner(DockerSpawner):
     extra_host_config = Dict(
         {
             'volumes_from': ['swarm-data'],  # --volumes-from swarm-data
-            'port_bindings': {8888: None},   # -p 8888:8888
-            'restart_policy': {              # --restart always
+            'port_bindings': {8888: None},  # -p 8888:8888
+            'restart_policy': {  # --restart always
                 'MaximumRetryCount': 0,
                 'Name': 'always'
             },
@@ -67,8 +68,9 @@ class CarinaSpawner(DockerSpawner):
             carina_dir = self.get_user_credentials_dir()
             docker_env = os.path.join(carina_dir, 'docker.env')
             if not os.path.exists(docker_env):
-                raise RuntimeError("ERROR! The credentials for {}/{} could not be found in {}.".format(
-                    self.user.name, self.cluster_name, carina_dir))
+                raise RuntimeError(
+                    "ERROR! The credentials for {}/{} could not be found in {}.".format(
+                        self.user.name, self.cluster_name, carina_dir))
 
             tls_config = docker.tls.TLSConfig(
                 client_cert=(os.path.join(carina_dir, 'cert.pem'),
@@ -90,7 +92,8 @@ class CarinaSpawner(DockerSpawner):
             self.log.debug("Initializing a carina client for %s", self.user.name)
             # Load OAuth configuration from the authenticator
             cfg = self.authenticator
-            self._carina_client = CarinaOAuthClient(cfg.client_id, cfg.client_secret, cfg.oauth_callback_url,
+            self._carina_client = CarinaOAuthClient(cfg.client_id, cfg.client_secret,
+                                                    cfg.oauth_callback_url,
                                                     user=self.user.name)
 
         return self._carina_client
