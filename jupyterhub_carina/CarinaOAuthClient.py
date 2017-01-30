@@ -214,7 +214,7 @@ class CarinaOAuthClient(LoggingConfigurable):
                 '(%s) %s\n%s',
                 self.user, cluster_name, cluster_id,
                 response.code, response.body, response.error)
-            response.rethrow
+            raise response.error
 
         credentials_zip = ZipFile(response.buffer, "r")
         credentials_zip.extractall(destination)
