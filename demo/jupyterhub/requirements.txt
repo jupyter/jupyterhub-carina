@@ -1,0 +1,2 @@
+oauthenticator==0.4.0
+jupyterhub-carina==0.1.1
