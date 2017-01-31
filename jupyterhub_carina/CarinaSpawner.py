@@ -164,8 +164,14 @@ class CarinaSpawner(DockerSpawner):
     def create_cluster(self):
         """
         Create a Carina cluster
+        Returns existing cluster if one with the same name is already present
         """
-        self.log.info("Creating cluster named: {} for {}".format(self.cluster_name, self.user.name))
+        cluster = yield self.carina_client.get_cluster(self.cluster_name)
+        if cluster is not None:
+            self.log.info("Found existing cluster: {}/{}".format(self.user.name, self.cluster_name))
+            return cluster
+
+        self.log.info("Creating cluster {}/{}".format(self.user.name, self.cluster_name))
         return (yield self.carina_client.create_cluster(self.cluster_name))
 
     @gen.coroutine

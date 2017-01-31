@@ -151,6 +151,30 @@ class CarinaOAuthClient(LoggingConfigurable):
         return template_id
 
     @gen.coroutine
+    def get_cluster(self, cluster_name):
+        """
+        Retrieve a Carina cluster by name
+        Returns None if it doesn't exist
+        """
+        self.log.info("Retrieving cluster %s/%s ", self.user, cluster_name)
+        request = HTTPRequest(
+            url=self.CARINA_CLUSTERS_URL,
+            method='GET',
+            headers={
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            })
+
+        response = yield self.execute_oauth_request(request)
+        result = json.loads(response.body.decode('utf8', 'replace'))
+
+        for cluster in result['clusters']:
+            if cluster['name'] == cluster_name:
+                return cluster
+
+        return None
+
+    @gen.coroutine
     def download_cluster_credentials(self, cluster_id, cluster_name, destination,
                                      polling_interval=30):
         """
@@ -190,7 +214,7 @@ class CarinaOAuthClient(LoggingConfigurable):
                 '(%s) %s\n%s',
                 self.user, cluster_name, cluster_id,
                 response.code, response.body, response.error)
-            response.rethrow
+            raise response.error
 
         credentials_zip = ZipFile(response.buffer, "r")
         credentials_zip.extractall(destination)
