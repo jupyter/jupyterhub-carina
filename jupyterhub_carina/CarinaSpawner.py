@@ -55,6 +55,7 @@ class CarinaSpawner(DockerSpawner):
         # Use a different docker client for each server
         self._client = None
         self._carina_client = None
+        self._docker_config = None
 
         super().__init__(**kwargs)
 
@@ -65,26 +66,47 @@ class CarinaSpawner(DockerSpawner):
         """
         # TODO: Figure out how to configure this without overriding, or tweak a bit and call super
         if self._client is None:
-            carina_dir = self.get_user_credentials_dir()
-            docker_env = os.path.join(carina_dir, 'docker.env')
+            creds_dir = self.docker_config['DOCKER_CERT_PATH']
+            api_endpoint = self.docker_config['DOCKER_HOST'].replace("tcp://", "https://")
+            tls_config = docker.tls.TLSConfig(
+                client_cert=(os.path.join(creds_dir, 'cert.pem'),
+                             os.path.join(creds_dir, 'key.pem')),
+                ca_cert=os.path.join(creds_dir, 'ca.pem'),
+                verify=os.path.join(creds_dir, 'ca.pem'),
+                assert_hostname=False)
+
+            self._client = docker.Client(version='auto', tls=tls_config, base_url=api_endpoint)
+
+        return self._client
+
+    @property
+    def docker_config(self):
+        """
+        The Docker client configuration variables for the user's Carina cluster
+        """
+        if self._docker_config is None:
+            creds_dir = self.get_user_credentials_dir()
+            docker_env = os.path.join(creds_dir, 'docker.env')
             if not os.path.exists(docker_env):
                 raise RuntimeError(
                     "ERROR! The credentials for {}/{} could not be found in {}.".format(
-                        self.user.name, self.cluster_name, carina_dir))
+                        self.user.name, self.cluster_name, creds_dir))
 
-            tls_config = docker.tls.TLSConfig(
-                client_cert=(os.path.join(carina_dir, 'cert.pem'),
-                             os.path.join(carina_dir, 'key.pem')),
-                ca_cert=os.path.join(carina_dir, 'ca.pem'),
-                verify=os.path.join(carina_dir, 'ca.pem'),
-                assert_hostname=False)
             with open(docker_env) as f:
                 env = f.read()
-            docker_host = re.findall("DOCKER_HOST=tcp://(\d+\.\d+\.\d+\.\d+:\d+)", env)[0]
-            docker_host = 'https://' + docker_host
-            self._client = docker.Client(version='auto', tls=tls_config, base_url=docker_host)
 
-        return self._client
+            host = re.findall("DOCKER_HOST=(.*)", env)[0]
+            version = re.findall("DOCKER_VERSION=(.*)", env)[0]
+
+            self._docker_config = {
+                'DOCKER_HOST': host,
+                'DOCKER_CERT_PATH': creds_dir,
+                'DOCKER_TLS_VERIFY': 1,
+                'DOCKER_VERSION': version,
+            }
+
+        return self._docker_config
+
 
     @property
     def carina_client(self):
@@ -138,9 +160,10 @@ class CarinaSpawner(DockerSpawner):
         env = super().get_env()
 
         self.log.debug("Adding Docker environment variables to the Jupyter server")
-        env['DOCKER_HOST'] = self.client.base_url.replace("https://", "tcp://")
-        env['DOCKER_TLS_VERIFY'] = 1
+        env['DOCKER_HOST'] = self.docker_config['DOCKER_HOST']
+        env['DOCKER_TLS_VERIFY'] = self.docker_config['DOCKER_TLS_VERIFY']
         env['DOCKER_CERT_PATH'] = '/var/run/docker/'
+        env['DOCKER_VERSION'] = self.docker_config['DOCKER_VERSION']
 
         return env
 
