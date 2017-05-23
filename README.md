@@ -1,4 +1,9 @@
-# jupyterhub-carina
+# [RETIRED] jupyterhub-carina 
+
+**This project has been retired since the Carina service is no longer available.**
+
+*Thank you to Carolyn Van Slyck @carolynvs for your support of JupyterHub and your education of new users.*
+
 Carina support for JupyterHub. Authenticate your users with Carina, then run their Jupyter servers on their own Carina clusters.
 
 For an example of what this looks like, head over to [howtowhale.com](https://howtowhale.com) and sign in with your Carina account.
